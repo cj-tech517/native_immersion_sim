@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Native Immersion Platform{% endblock %}</title>
+    <!-- Tailwind CSS v4 -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #f8fafc;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-indigo-500 selection:text-white"
+    x-data="{ mobileMenuOpen: false }">
+
+    <!-- TOP NAV -->
+    <nav class="sticky top-0 z-40 border-b border-slate-800/80 glass-panel">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            <!-- Brand Logo -->
+            <a href="{% url 'video_index' %}" class="flex items-center gap-2 min-w-0">
+                <span class="text-xl sm:text-2xl flex-shrink-0">🗣️</span>
+                <span class="font-black text-base sm:text-lg tracking-tight text-white truncate">
+                    Native<span class="text-indigo-400">Immersion</span>
+                </span>
+            </a>
+
+            <!-- Desktop & Tablet Quick Links -->
+            <div class="hidden md:flex items-center gap-2 lg:gap-3 text-xs sm:text-sm font-semibold flex-shrink-0">
+                <a href="{% url 'about_us' %}"
+                    class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs py-2 px-3 rounded-xl border border-slate-700 transition flex items-center gap-1.5">
+                    <span>ℹ️</span> <span>About</span>
+                </a>
+
+                <a href="{% url 'my_deck' %}"
+                    class="bg-slate-800/80 hover:bg-slate-700 border border-slate-700/80 text-amber-400 font-bold py-2 px-3 rounded-xl transition flex items-center gap-1.5 shadow-sm">
+                    <span>🔖</span>
+                    <span>My Saved Deck</span>
+                    {% if saved_items_count %}
+                    <span
+                        class="bg-amber-950/80 text-amber-300 text-[10px] font-mono px-1.5 py-0.5 rounded-md border border-amber-800/80">
+                        {{ saved_items_count }}
+                    </span>
+                    {% endif %}
+                </a>
+
+                <a href="{% url 'practice_quiz' %}"
+                    class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-3.5 sm:px-4 rounded-xl transition shadow-lg shadow-indigo-600/20 flex items-center gap-1.5">
+                    <span>⚡</span> <span>Subtext Practice</span>
+                </a>
+
+                <a href="{% url 'student_dashboard' %}"
+                    class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs py-2 px-3 rounded-xl border border-slate-700 transition flex items-center gap-1.5">
+                    <span>📊</span> <span>Évaluations</span>
+                </a>
+
+                <a href="{% url 'ai_coach_page' %}"
+                    class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs py-2 px-3 rounded-xl border border-slate-700 transition cursor-pointer flex items-center gap-1.5">
+                    <span>🤖</span> AI
+                </a>
+
+                <form action="{% url 'logout' %}" method="post" class="inline">
+                    {% csrf_token %}
+                    <button type="submit"
+                        class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs py-2 px-3 rounded-xl border border-slate-700 transition cursor-pointer flex items-center gap-1.5">
+                        <span>🚪</span> Logout
+                    </button>
+                </form>
+            </div>
+
+            <!-- Mobile Hamburger Button -->
+            <div class="flex md:hidden items-center gap-2">
+                {% if saved_items_count %}
+                <a href="{% url 'my_deck' %}"
+                    class="bg-slate-800/80 border border-slate-700/80 text-amber-400 font-bold py-1.5 px-2.5 rounded-xl text-xs flex items-center gap-1">
+                    <span>🔖</span>
+                    <span class="font-mono text-[10px]">{{ saved_items_count }}</span>
+                </a>
+                {% endif %}
+                <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"
+                    class="bg-slate-800 hover:bg-slate-700 text-slate-200 p-2.5 rounded-xl border border-slate-700 transition cursor-pointer flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Dropdown Menu -->
+        <div id="mobile-menu" class="hidden md:hidden border-t border-slate-800 bg-slate-900/95 px-4 py-4 space-y-3">
+            <a href="{% url 'about_us' %}"
+                class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 px-3 rounded-xl border border-slate-700 transition flex items-center gap-2 text-xs">
+                <span>ℹ️</span> About Us
+            </a>
+
+            <a href="{% url 'my_deck' %}"
+                class="w-full bg-slate-800/80 hover:bg-slate-700 border border-slate-700/80 text-amber-400 font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-between text-xs">
+                <span class="flex items-center gap-2"><span>🔖</span> My Saved Deck</span>
+                {% if saved_items_count %}
+                <span
+                    class="bg-amber-950/80 text-amber-300 text-[10px] font-mono px-1.5 py-0.5 rounded-md border border-amber-800/80">
+                    {{ saved_items_count }}
+                </span>
+                {% endif %}
+            </a>
+
+            <a href="{% url 'practice_quiz' %}"
+                class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-3 rounded-xl transition shadow-lg shadow-indigo-600/20 flex items-center gap-2 text-xs">
+                <span>⚡</span> Subtext Practice
+            </a>
+
+            <a href="{% url 'student_dashboard' %}"
+                class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 px-3 rounded-xl border border-slate-700 transition flex items-center gap-2 text-xs">
+                <span>📊</span> Évaluations
+            </a>
+
+            <form action="{% url 'logout' %}" method="post" class="block w-full pt-1">
+                {% csrf_token %}
+                <button type="submit"
+                    class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs py-2.5 px-3 rounded-xl border border-slate-700 transition cursor-pointer flex items-center gap-2 justify-center">
+                    <span>🚪</span> Logout
+                </button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8 flex-1 w-full">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800/80 py-6 text-center text-xs text-slate-500 mt-12 px-4 space-y-2">
+        <p>Native Immersion Platform &copy; 2026. Built for context mastery.</p>
+        <p>
+            <a href="{% url 'about_us' %}" class="text-indigo-400 hover:underline">About the Platform</a>
+        </p>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

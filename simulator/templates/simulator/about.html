@@ -1,0 +1,134 @@
+{% extends 'simulator/base.html' %} <!-- Adjust base path if needed based on your app structure -->
+
+{% block title %}About Us | Native Immersion Platform{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+
+    <!-- NAVBAR BACK LINK -->
+    <div>
+        <a href="{% url 'video_index' %}"
+            class="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition uppercase tracking-wider inline-flex items-center gap-1">
+            &larr; Back to Simulator Dashboard
+        </a>
+    </div>
+
+    <!-- HEADER SECTION -->
+    <header class="border-b border-slate-800 pb-8">
+        <h1 class="text-3xl sm:text-4xl font-black text-white tracking-tight">About Native Immersion</h1>
+        <p class="text-slate-400 text-sm sm:text-base mt-2">The ultimate native immersion simulator designed to break
+            through the advanced language plateau.</p>
+    </header>
+
+    <!-- CONTENT BODY -->
+    <div class="space-y-8 text-slate-300 leading-relaxed text-sm sm:text-base">
+
+        <!-- Vision Section -->
+        <section class="bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-2xl shadow-xl">
+            <h2 class="text-xl font-bold text-white mb-3">Our Vision</h2>
+            <p>
+                Traditional language apps stop at vocabulary lists and basic grammar, leaving advanced learners stuck in
+                a plateau where they understand every literal word but miss the cultural subtext, rapid-fire pacing, and
+                idioms of real native speech. <strong>Native Immersion</strong> shifts the paradigm from simple studying
+                to a true native media simulator.
+            </p>
+        </section>
+
+        <!-- Core Features Grid -->
+        <section class="bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-2xl shadow-xl space-y-6">
+            <h2 class="text-xl font-bold text-white">Core Platform Features</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs sm:text-sm">
+
+                <!-- AI Coach Feature -->
+                <div
+                    class="bg-slate-950/60 p-5 rounded-xl border border-slate-800 space-y-2 flex flex-col justify-between">
+                    <div>
+                        <span class="text-2xl block mb-2">🤖</span>
+                        <h3 class="font-bold text-white text-base">AI Fluency Coach</h3>
+                        <p class="text-slate-400 mt-1">An intelligent companion built right into our library of
+                            thousands of videos to explain any specific word, idiom, or cultural expression on the fly.
+                        </p>
+                    </div>
+                    <div class="pt-4">
+                        <a href="{% url 'ai_coach_page' %}"
+                            class="text-indigo-400 hover:text-indigo-300 font-semibold text-xs inline-flex items-center gap-1">
+                            Open AI Coach &rarr;
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Native Brain Decoder -->
+                <div
+                    class="bg-slate-950/60 p-5 rounded-xl border border-slate-800 space-y-2 flex flex-col justify-between">
+                    <div>
+                        <span class="text-2xl block mb-2">🧠</span>
+                        <h3 class="font-bold text-white text-base">Native Brain Decoder</h3>
+                        <p class="text-slate-400 mt-1">Unlocks hidden social subtexts, showing you what a speaker
+                            literally says versus what they actually mean in real-world contexts.</p>
+                    </div>
+                    <div class="pt-4">
+                        <a href="{% url 'video_index' %}"
+                            class="text-indigo-400 hover:text-indigo-300 font-semibold text-xs inline-flex items-center gap-1">
+                            Explore Modules &rarr;
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Interactive Quiz Tools -->
+                <div
+                    class="bg-slate-950/60 p-5 rounded-xl border border-slate-800 space-y-2 flex flex-col justify-between">
+                    <div>
+                        <span class="text-2xl block mb-2">⚡</span>
+                        <h3 class="font-bold text-white text-base">Interactive Subtext Practice</h3>
+                        <p class="text-slate-400 mt-1">Structured evaluation systems designed to test your comprehension
+                            of advanced phrases, conversational triggers, and nuances.</p>
+                    </div>
+                    <div class="pt-4">
+                        <a href="{% url 'practice_quiz' %}"
+                            class="text-indigo-400 hover:text-indigo-300 font-semibold text-xs inline-flex items-center gap-1">
+                            Launch Practice Quiz &rarr;
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Shadowing & Saved Deck Tools -->
+                <div
+                    class="bg-slate-950/60 p-5 rounded-xl border border-slate-800 space-y-2 flex flex-col justify-between">
+                    <div>
+                        <span class="text-2xl block mb-2">🔖</span>
+                        <h3 class="font-bold text-white text-base">Saved Decks & Shadowing</h3>
+                        <p class="text-slate-400 mt-1">Train your vocal muscle memory, bookmark crucial phrases, and
+                            review your personal expression collection anytime.</p>
+                    </div>
+                    <div class="pt-4">
+                        <a href="{% url 'my_deck' %}"
+                            class="text-indigo-400 hover:text-indigo-300 font-semibold text-xs inline-flex items-center gap-1">
+                            View My Deck &rarr;
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Call to Action Footer Box -->
+        <section
+            class="bg-indigo-950/30 border border-indigo-900/50 p-6 sm:p-8 rounded-2xl shadow-xl text-center space-y-4">
+            <h2 class="text-xl font-bold text-white">Ready to Master the Matrix of English Culture?</h2>
+            <p class="text-slate-400 text-sm max-w-lg mx-auto">Jump back into the simulator or connect with your AI
+                coach to start active fluency training today.</p>
+            <div class="flex flex-wrap justify-center gap-3 pt-2">
+                <a href="{% url 'video_index' %}"
+                    class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm py-3 px-6 rounded-xl transition shadow-lg shadow-indigo-600/20">
+                    Explore Simulator Modules
+                </a>
+                <a href="{% url 'ai_coach_page' %}"
+                    class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-sm py-3 px-6 rounded-xl transition border border-slate-700">
+                    Talk to AI Coach
+                </a>
+            </div>
+        </section>
+
+    </div>
+</div>
+{% endblock %}

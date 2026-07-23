@@ -1,0 +1,26 @@
+{% extends 'simulator/base.html' %}
+
+{% block title %}Pending Approval | Native Immersion Simulator{% endblock %}
+
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-lg w-full text-center shadow-2xl space-y-4">
+        <span class="text-5xl">⏳</span>
+        <h1 class="text-2xl font-black text-white">Account Pending Validation</h1>
+        <p class="text-slate-300 text-sm leading-relaxed">
+            Thank you for registering and subscribing! Your payment/subscription is registered, but your account is
+            currently pending manual activation by our team.
+        </p>
+        <p class="text-slate-500 text-xs">
+            Once an administrator verifies your subscription in the backend panel, you will get instant access to all
+            training modules.
+        </p>
+        <div class="pt-4">
+            <a href="{% url 'logout' %}"
+                class="inline-block bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs py-2 px-4 rounded-xl transition">
+                Log Out
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

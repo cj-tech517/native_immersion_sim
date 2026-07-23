@@ -1,0 +1,104 @@
+{% extends 'simulator/base.html' %}
+
+{% block title %}{{ assessment.title }} | Native Immersion Simulator{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-8">
+
+    <!-- En-tête -->
+    <div class="flex items-center justify-between border-b border-slate-800 pb-6">
+        <div>
+            <a href="{% url 'video_player' video.id %}"
+                class="text-xs text-indigo-400 hover:underline flex items-center gap-1 mb-2">
+                ← Retour au lecteur vidéo
+            </a>
+            <h1 class="text-2xl font-black text-white">📝 {{ assessment.title }}</h1>
+            <p class="text-slate-400 text-xs mt-1">Vidéo : {{ video.title }}</p>
+        </div>
+
+        <!-- Badge indicateur du nombre d'essais -->
+        <div class="text-right">
+            <span
+                class="bg-slate-900 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-semibold">
+                Essai : <span class="text-indigo-400 font-bold">{{ attempts_count|default:0 }}</span> / 3
+            </span>
+        </div>
+    </div>
+
+    {% if assessment.instructions %}
+    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-xs text-slate-300">
+        <span class="font-bold text-indigo-400">Consignes :</span> {{ assessment.instructions }}
+    </div>
+    {% endif %}
+
+    <!-- Formulaire d'évaluation -->
+    <form method="POST" action="" class="space-y-6">
+        {% csrf_token %}
+
+        {% for question in assessment.questions.all %}
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">Partie
+                    {{ question.part_number }}</span>
+                <span
+                    class="bg-slate-950 text-slate-300 border border-slate-800 px-2 py-0.5 rounded-lg text-xs font-semibold">
+                    {{ question.points }} pts
+                </span>
+            </div>
+
+            <label class="block text-sm font-semibold text-slate-100">
+                {{ forloop.counter }}. {{ question.question_text }}
+            </label>
+
+            <!-- Rendu pour question QCM -->
+            {% if question.question_type == 'QCM' %}
+            <div class="space-y-2 mt-2">
+                {% for option in question.options.splitlines %}
+                <label
+                    class="flex items-center gap-3 p-3 bg-slate-950 border border-slate-800 rounded-lg cursor-pointer hover:border-indigo-500 transition">
+                    <input type="radio" name="question_{{ question.id }}" value="{{ option }}" required
+                        class="text-indigo-600 focus:ring-indigo-500">
+                    <span class="text-slate-200 text-sm">{{ option }}</span>
+                </label>
+                {% endfor %}
+            </div>
+
+            <!-- Rendu pour question VRAI / FAUX -->
+            {% elif question.question_type == 'TRUE_FALSE' %}
+            <div class="space-y-3">
+                <select name="question_{{ question.id }}_bool" required
+                    class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                    <option value="">-- Choisir Vrai ou Faux --</option>
+                    <option value="TRUE">TRUE (Vrai)</option>
+                    <option value="FALSE">FALSE (Faux)</option>
+                </select>
+
+                {% if question.requires_justification %}
+                <input type="text" name="question_{{ question.id }}_justification" required
+                    placeholder="Justification ou citation du script..."
+                    class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                {% endif %}
+            </div>
+
+            <!-- Rendu pour question TEXTE LIBRE -->
+            {% else %}
+            <textarea name="question_{{ question.id }}" rows="3" required
+                class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
+                placeholder="Écris ta réponse ici..."></textarea>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-slate-400">
+            <p>Aucune question n'a encore été configurée pour cette évaluation dans l'administration.</p>
+        </div>
+        {% endfor %}
+
+        {% if assessment.questions.all %}
+        <button type="submit"
+            class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-xl transition cursor-pointer shadow-lg shadow-indigo-600/25">
+            Soumettre mon évaluation 🚀
+        </button>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

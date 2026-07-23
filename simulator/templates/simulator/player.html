@@ -1,0 +1,537 @@
+{% extends 'simulator/base.html' %}
+
+{% block title %}{{ video.title }} | Native Immersion Simulator{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Toast animation */
+    @keyframes toastIn {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .animate-toast {
+        animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- SAFELY INJECTED DATASTREAMS -->
+<div id="expressions-data" class="hidden">
+    [
+    {% for exp in expressions %}
+    {
+    "id": {{ exp.id }},
+    "second": {{ exp.timestamp_seconds }},
+    "phrase": "{{ exp.phrase|escapejs }}",
+    "literal": "{{ exp.literal_meaning|escapejs }}",
+    "subtext": "{{ exp.native_subtext|escapejs }}",
+    "context": "{{ exp.social_context|escapejs }}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+    ]
+</div>
+
+<div id="transcript-data" class="hidden">
+    [
+    {% for line in transcript_lines %}
+    {
+    "id": {{ line.id }},
+    "second": {{ line.timestamp_seconds }}
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+    ]
+</div>
+
+<!-- MAIN CONTAINER -->
+<div class="max-w-7xl mx-auto min-h-[80vh] flex flex-col justify-between">
+    <div>
+        <!-- HEADER -->
+        <header class="mb-6 sm:mb-8">
+            <a href="{% url 'video_index' %}"
+                class="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-indigo-400 transition mb-3">
+                ← Back to Dashboard
+            </a>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                    <span
+                        class="bg-indigo-600/30 text-indigo-400 text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider inline-block mb-2">
+                        {{ video.category.name }}
+                    </span>
+                    <h1 class="text-2xl sm:text-3xl font-black text-white leading-tight">{{ video.title }}</h1>
+                    <p class="text-slate-400 text-xs sm:text-sm mt-1">Native Immersion Training Simulator</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN RESPONSIVE GRID -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
+
+            <!-- LEFT COLUMN: VIDEO PLAYER, TIMELINE & TRANSCRIPT -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- VIDEO PLAYER BOX -->
+                <div
+                    class="relative w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-slate-800">
+                    <div id="player" class="w-full h-full"></div>
+                </div>
+                <p class="text-xs text-slate-500 italic px-1">
+                    💡 The video will auto-pause when a phrase appears. Press play or click a key phrase below to jump
+                    ahead.
+                </p>
+
+                <!-- TIMELINE & EXPRESSIONS LIST -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
+                    <h3 class="text-base sm:text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <span>⏱️</span> Key Subtext & Expressions in this Video
+                    </h3>
+
+                    {% if expressions %}
+                    <div class="space-y-2.5">
+                        {% for exp in expressions %}
+                        <div onclick="jumpToSecond({{ exp.timestamp_seconds }})"
+                            class="flex items-center justify-between p-3 bg-slate-950/60 hover:bg-slate-800/80 border border-slate-800 rounded-xl cursor-pointer transition group gap-3">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <span
+                                    class="bg-indigo-950 text-indigo-400 font-mono text-xs font-bold px-2 py-1 rounded-md border border-indigo-900/50 shrink-0">
+                                    {{ exp.timestamp_seconds }}s
+                                </span>
+                                <span
+                                    class="text-slate-200 text-xs sm:text-sm font-semibold group-hover:text-indigo-400 transition truncate">
+                                    "{{ exp.phrase }}"
+                                </span>
+                            </div>
+                            <span
+                                class="text-[11px] text-slate-500 group-hover:text-slate-300 transition shrink-0 hidden sm:inline">
+                                Jump to phrase →
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-slate-500 text-sm italic">No expressions logged for this video yet.</p>
+                    {% endif %}
+                </div>
+
+                <!-- INTERACTIVE TRANSCRIPT DRAWER -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                            <span>📜</span> Interactive Dual Transcript
+                        </h3>
+                        <!-- TOGGLE BUTTON -->
+                        <button onclick="toggleTranscript()"
+                            class="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 text-xs font-semibold py-1.5 px-3 rounded-lg border border-indigo-800/50 transition flex items-center gap-1.5 cursor-pointer">
+                            <span id="transcript-toggle-icon">👁️</span>
+                            <span id="transcript-toggle-text">Show Transcript</span>
+                        </button>
+                    </div>
+
+                    <!-- TRANSCRIPT CONTENT -->
+                    <div id="transcript-panel" class="hidden mt-4 pt-4 border-t border-slate-800">
+                        {% if transcript_lines %}
+                        <p class="text-xs text-slate-500 mb-3">Click any line to jump directly to that timestamp:</p>
+                        <div id="transcript-container"
+                            class="max-h-60 overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-slate-800">
+                            {% for line in transcript_lines %}
+                            <div id="transcript-line-{{ line.timestamp_seconds }}"
+                                onclick="jumpToSecond({{ line.timestamp_seconds }})"
+                                class="transcript-row p-2.5 rounded-lg hover:bg-slate-800/80 cursor-pointer transition flex items-start gap-3 border border-transparent">
+                                <span
+                                    class="text-xs font-mono text-indigo-400 font-bold bg-slate-950 px-2 py-0.5 rounded border border-slate-800 shrink-0">
+                                    {{ line.timestamp_seconds }}s
+                                </span>
+                                <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                                    {% if line.speaker %}
+                                    <strong class="text-indigo-300">{{ line.speaker }}:</strong>
+                                    {% endif %}
+                                    {{ line.text }}
+                                </p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-slate-500 text-sm italic">No transcript synced for this video yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: NATIVE BRAIN DECODER -->
+            <div class="space-y-6 lg:sticky lg:top-6">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="text-2xl">🧠</span>
+                        <h2 class="text-lg sm:text-xl font-bold text-indigo-400">Native Brain Decoder</h2>
+                    </div>
+
+                    <div id="decoder-placeholder" class="text-slate-500 text-sm italic py-10 sm:py-16 text-center">
+                        Play the video. The Culture Decoder will activate when an advanced idiom or subtext is spoken.
+                    </div>
+
+                    <div id="decoder-content" class="hidden space-y-4">
+                        <div>
+                            <span
+                                class="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">Surface
+                                Phrasing:</span>
+                            <p id="phrase-text"
+                                class="text-xl sm:text-2xl font-black text-white italic mt-1 leading-snug"></p>
+                        </div>
+
+                        <div class="p-3.5 sm:p-4 bg-indigo-950/40 border border-indigo-900/60 rounded-xl">
+                            <span
+                                class="text-[10px] sm:text-xs text-indigo-400 block uppercase tracking-wider font-bold mb-1">
+                                🎭 The Native Subtext (What they REALLY mean):
+                            </span>
+                            <p id="subtext-text" class="text-slate-200 font-medium text-xs sm:text-sm leading-relaxed">
+                            </p>
+                        </div>
+
+                        <div>
+                            <span
+                                class="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">Literal
+                                Meaning:</span>
+                            <p id="literal-text" class="text-slate-400 text-xs mt-1"></p>
+                        </div>
+
+                        <div>
+                            <span class="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">Social
+                                Context Trigger:</span>
+                            <p id="context-text" class="text-slate-400 text-xs italic mt-1"></p>
+                        </div>
+
+                        <!-- AUDIO & SHADOWING TOOLKIT -->
+                        <div class="p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2">
+                            <span class="text-[10px] text-slate-400 block uppercase tracking-wider font-bold">
+                                🎧 Pronunciation & Shadowing Tools:
+                            </span>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button onclick="loopPhrase()"
+                                    class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold py-1.5 px-2 rounded-lg border border-slate-700 transition flex items-center justify-center gap-1 cursor-pointer">
+                                    <span>🔁</span> <span class="hidden sm:inline">Loop</span> 3s
+                                </button>
+                                <button onclick="setPlaybackSpeed(0.75)"
+                                    class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold py-1.5 px-2 rounded-lg border border-slate-700 transition flex items-center justify-center gap-1 cursor-pointer">
+                                    <span>🐢</span> 0.75x
+                                </button>
+                                <button onclick="setPlaybackSpeed(1.0)"
+                                    class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold py-1.5 px-2 rounded-lg border border-slate-700 transition flex items-center justify-center gap-1 cursor-pointer">
+                                    <span>⚡</span> 1.0x
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- BOOKMARK BUTTON -->
+                        <button id="bookmark-btn" onclick="saveCurrentExpression()"
+                            class="w-full bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs sm:text-sm py-2.5 px-4 rounded-xl border border-slate-700 transition flex items-center justify-center gap-2 cursor-pointer">
+                            <span>🔖</span> <span id="bookmark-btn-text">Save to My Deck</span>
+                        </button>
+
+                        <!-- RESUME VIDEO BUTTON -->
+                        <button onclick="resumeVideo()"
+                            class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-600/20">
+                            <span>Got it! Resume Video</span>
+                            <span>▶</span>
+                        </button>
+
+                        <div class="pt-2 border-t border-slate-800">
+                            <a href="{% url 'video_assessment' video.id %}"
+                                class="w-full bg-slate-800 hover:bg-slate-700 text-indigo-300 font-semibold text-xs py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2 border border-slate-700">
+                                <span>📝</span> Go to the assessment for this video
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Box UI Container -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col h-80 shadow-xl">
+                    <h3 class="text-sm font-bold text-indigo-400 mb-2 flex items-center gap-1.5">
+                        <span>💬</span> AI Fluency Coach
+                    </h3>
+
+                    <!-- Messages Scroll Area -->
+                    <div id="chat-messages"
+                        class="flex-1 overflow-y-auto space-y-3 pr-2 text-xs text-slate-300 scrollbar-thin scrollbar-thumb-slate-800">
+                        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                            <span class="font-bold text-indigo-400">Coach:</span> Ask me anything about what the
+                            characters said, implied, or their underlying tone across the app!
+                        </div>
+                    </div>
+
+                    <!-- Input Form -->
+                    <div class="mt-3 flex gap-2">
+                        <input type="text" id="chat-input" placeholder="Ex: What did Serenity mean when..."
+                            onkeydown="if(event.key === 'Enter') sendAgentMessage()"
+                            class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                        <button onclick="sendAgentMessage()"
+                            class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl transition text-xs shadow-lg shadow-indigo-600/25 cursor-pointer">
+                            Ask
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- TOAST NOTIFICATION FOR SAVED CARDS -->
+<div id="toast-notification"
+    class="fixed bottom-6 right-6 z-50 hidden bg-emerald-950 border border-emerald-800 text-emerald-200 px-4 py-3 rounded-xl shadow-2xl items-center gap-3 animate-toast">
+    <span class="text-lg">✅</span>
+    <span id="toast-message" class="text-xs font-bold">Saved to your personal deck!</span>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Load YouTube IFrame Player API
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    var player;
+    var currentExpressionId = null;
+    var lastTriggeredExpressionId = null;
+
+    // Parse expressions payload safely
+    var expressions = [];
+    try {
+        var rawExpressions = document.getElementById('expressions-data').textContent.trim();
+        expressions = JSON.parse(rawExpressions);
+    } catch (e) {
+        console.error("Error parsing expressions payload:", e);
+    }
+
+    // Parse transcript payload safely
+    var transcriptLines = [];
+    try {
+        var rawTranscript = document.getElementById('transcript-data').textContent.trim();
+        transcriptLines = JSON.parse(rawTranscript);
+    } catch (e) {
+        console.error("Error parsing transcript payload:", e);
+    }
+
+    function onYouTubeIframeAPIReady() {
+        // Read ?t= from URL parameters (e.g. from My Deck page)
+        const urlParams = new URLSearchParams(window.location.search);
+        const startSecond = parseInt(urlParams.get('t')) || 0;
+
+        player = new YT.Player('player', {
+            height: '100%',
+            width: '100%',
+            videoId: '{{ video.youtube_id }}',
+            playerVars: {
+                'playsinline': 1,
+                'rel': 0,
+                'start': startSecond  // Auto-seeks to timestamp when loading from deck
+            },
+            events: { 'onStateChange': onPlayerStateChange }
+        });
+    }
+
+    var checkTimer;
+    function onPlayerStateChange(event) {
+        if (event.data == YT.PlayerState.PLAYING) {
+            checkTimer = setInterval(checkTimestamp, 500);
+        } else {
+            clearInterval(checkTimer);
+        }
+    }
+
+    function checkTimestamp() {
+        if (!player || typeof player.getCurrentTime !== 'function') return;
+        var currentTime = player.getCurrentTime();
+        var currentSecond = Math.floor(currentTime);
+
+        // Highlight active transcript line
+        highlightTranscriptLine(currentSecond);
+
+        // Robust check for subtext decoder trigger
+        var match = expressions.find(exp =>
+            currentTime >= exp.second &&
+            currentTime < (exp.second + 1.2) &&
+            exp.id !== lastTriggeredExpressionId
+        );
+
+        if (match) {
+            lastTriggeredExpressionId = match.id;
+            player.pauseVideo();
+            displayDecoder(match);
+        }
+    }
+
+    function displayDecoder(data) {
+        currentExpressionId = data.id;
+        document.getElementById('decoder-placeholder').classList.add('hidden');
+        document.getElementById('decoder-content').classList.remove('hidden');
+
+        document.getElementById('phrase-text').innerText = `"${data.phrase}"`;
+        document.getElementById('subtext-text').innerText = data.subtext;
+        document.getElementById('literal-text').innerText = data.literal;
+        document.getElementById('context-text').innerText = data.context;
+
+        document.getElementById('bookmark-btn-text').innerText = "Save to My Deck";
+    }
+
+    function resumeVideo() {
+        if (player && typeof player.playVideo === 'function') {
+            player.setPlaybackRate(1.0); // Reset speed on resume
+            player.playVideo();
+        }
+    }
+
+    function jumpToSecond(seconds) {
+        if (player && typeof player.seekTo === 'function') {
+            player.seekTo(seconds, true);
+            player.playVideo();
+
+            var match = expressions.find(exp => exp.second === seconds);
+            if (match) {
+                lastTriggeredExpressionId = match.id;
+                displayDecoder(match);
+            }
+        }
+    }
+
+    function saveCurrentExpression() {
+        if (!currentExpressionId) return;
+
+        fetch(`/bookmark/${currentExpressionId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => {
+                if (response.status === 401) {
+                    alert('Please log in to save expressions to your deck!');
+                    return null;
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data) return;
+                var btnText = document.getElementById('bookmark-btn-text');
+                if (data.is_saved) {
+                    btnText.innerText = "Saved in Your Deck! ✓";
+                    showToast("Expression saved to your deck!");
+                } else {
+                    btnText.innerText = "Save to My Deck";
+                    showToast("Expression removed from deck");
+                }
+            })
+            .catch(err => console.error('Error saving bookmark:', err));
+    }
+
+    function showToast(message) {
+        var toast = document.getElementById('toast-notification');
+        var toastMsg = document.getElementById('toast-message');
+        toastMsg.innerText = message;
+        toast.classList.remove('hidden');
+        toast.classList.add('flex');
+
+        setTimeout(() => {
+            toast.classList.add('hidden');
+            toast.classList.remove('flex');
+        }, 3000);
+    }
+
+    function loopPhrase() {
+        if (player && typeof player.getCurrentTime === 'function') {
+            var currentTime = player.getCurrentTime();
+            var targetTime = Math.max(0, currentTime - 3);
+            player.seekTo(targetTime, true);
+            player.playVideo();
+        }
+    }
+
+    function setPlaybackSpeed(rate) {
+        if (player && typeof player.setPlaybackRate === 'function') {
+            player.setPlaybackRate(rate);
+        }
+    }
+
+    function highlightTranscriptLine(currentSecond) {
+        document.querySelectorAll('.transcript-row').forEach(row => {
+            row.classList.remove('bg-indigo-950/65', 'border-indigo-800/60', 'shadow-inner');
+        });
+
+        var activeLine = transcriptLines.find(line => line.second === currentSecond);
+
+        if (activeLine) {
+            var el = document.getElementById(`transcript-line-${activeLine.second}`);
+            if (el) {
+                el.classList.add('bg-indigo-950/65', 'border-indigo-800/60', 'shadow-inner');
+                el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+    }
+
+    function toggleTranscript() {
+        var panel = document.getElementById('transcript-panel');
+        var text = document.getElementById('transcript-toggle-text');
+        var icon = document.getElementById('transcript-toggle-icon');
+
+        if (panel.classList.contains('hidden')) {
+            panel.classList.remove('hidden');
+            text.innerText = 'Hide Transcript';
+            icon.innerText = '🙈';
+        } else {
+            panel.classList.add('hidden');
+            text.innerText = 'Show Transcript';
+            icon.innerText = '👁️';
+        }
+    }
+
+    async function sendAgentMessage() {
+        const inputField = document.getElementById("chat-input");
+        const chatContainer = document.getElementById("chat-messages");
+        const userQuery = inputField.value.trim();
+
+        if (!userQuery) return;
+
+        // Append user message cleanly
+        chatContainer.innerHTML += `<div class="bg-slate-800 p-2.5 rounded-xl text-right ml-6"><span class="font-bold text-white">You:</span> ${userQuery}</div>`;
+        inputField.value = "";
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+
+        try {
+            const response = await fetch("{% url 'ai_chat_api' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify({ question: userQuery })
+            });
+
+            const data = await response.json();
+
+            if (data.reply) {
+                let sourceHtml = "";
+                if (data.sources_used && data.sources_used.length > 0) {
+                    sourceHtml = `<div class="mt-2 text-[10px] text-slate-400 italic">Found in: ${data.sources_used.join(', ')}</div>`;
+                }
+                chatContainer.innerHTML += `<div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 mr-6"><span class="font-bold text-indigo-400">Coach:</span> ${data.reply}${sourceHtml}</div>`;
+            } else {
+                chatContainer.innerHTML += `<div class="bg-red-950 p-2.5 rounded-xl text-red-300">Error fetching response from coach.</div>`;
+            }
+        } catch (err) {
+            console.error(err);
+            chatContainer.innerHTML += `<div class="bg-red-950 p-2.5 rounded-xl text-red-300">Network error connecting to coach.</div>`;
+        }
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+</script>
+{% endblock %}

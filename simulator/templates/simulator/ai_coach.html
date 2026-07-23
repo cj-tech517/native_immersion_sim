@@ -1,0 +1,272 @@
+{% extends 'simulator/base.html' %}
+
+{% block title %}AI Fluency Coach — Elite Suite{% endblock %}
+
+{% block extra_head %}
+<!-- Tailwind Custom Configuration for AI Coach Theme -->
+<script>
+    tailwind.config = {
+        darkMode: 'class',
+        theme: {
+            extend: {
+                colors: {
+                    obsidian: '#0a0a0c',
+                    surface: '#121316',
+                    elevated: '#1a1b20',
+                    brand: {
+                        50: '#f5f3ff',
+                        400: '#a78bfa',
+                        500: '#8b5cf6',
+                        600: '#7c3aed',
+                        700: '#6d28d9',
+                    }
+                }
+            }
+        }
+    }
+</script>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+    body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .safe-bottom {
+        padding-bottom: env(safe-area-inset-bottom, 1.25rem);
+    }
+
+    #chat-container {
+        scroll-behavior: smooth;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+    }
+
+    #chat-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #chat-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    #chat-container::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 9999px;
+    }
+
+    /* Glassmorphism & Glow Effects */
+    .glass-panel {
+        background: rgba(18, 19, 22, 0.75);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .glow-effect {
+        box-shadow: 0 0 40px -10px rgba(124, 58, 237, 0.15);
+    }
+
+    @keyframes pulse-subtle {
+
+        0%,
+        100% {
+            opacity: 0.4;
+        }
+
+        50% {
+            opacity: 1;
+        }
+    }
+
+    .animate-pulse-subtle {
+        animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Ambient background gradients -->
+<div class="absolute top-0 left-1/4 w-96 h-96 bg-brand-600/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+<!-- Main Container Layout for Coach -->
+<div class="relative z-10 flex-1 w-full max-w-4xl mx-auto flex flex-col h-[calc(100vh-12rem)] overflow-hidden">
+
+    <!-- Header Section -->
+    <header class="flex-shrink-0 mb-4 sm:mb-6 flex items-center justify-between border-b border-white/5 pb-4">
+        <div class="flex items-center space-x-3">
+            <div
+                class="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-brand-600/20">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                    AI Fluency Coach
+                    <span
+                        class="text-[10px] font-semibold bg-brand-500/20 text-brand-400 border border-brand-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">C1/C2
+                        Elite</span>
+                </h1>
+                <p class="text-xs sm:text-sm text-gray-400 mt-0.5">Dissect character subtext, idioms, and emotional tone
+                    across app scripts.</p>
+            </div>
+        </div>
+        <div class="hidden sm:flex items-center gap-2">
+            <span
+                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                Engine Online
+            </span>
+        </div>
+    </header>
+
+    <!-- Chat Box Container -->
+    <div id="chat-container"
+        class="flex-1 min-h-0 glass-panel rounded-2xl p-4 sm:p-6 overflow-y-auto space-y-6 mb-4 glow-effect">
+
+        <!-- Initial AI Greeting Message -->
+        <div class="flex items-start space-x-3">
+            <div
+                class="flex-shrink-0 h-9 w-9 rounded-xl bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center font-bold text-sm text-white shadow-md">
+                AI
+            </div>
+            <div class="flex-1 max-w-[88%] sm:max-w-[82%]">
+                <div
+                    class="bg-surface border border-white/5 rounded-2xl rounded-tl-sm p-4 sm:p-5 text-gray-200 text-sm sm:text-base leading-relaxed shadow-xl space-y-2">
+                    <p>Welcome back. I am your elite English Fluency AI Coach, configured to extract advanced nuance,
+                        emotional subtext, and native idioms from your dialogues.</p>
+                    <p class="text-gray-400 text-xs sm:text-sm">What structural pattern, phrase, or character motivation
+                        would you like to explore today?</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Input Form Section -->
+    <form id="chat-form"
+        class="flex-shrink-0 flex gap-3 items-center glass-panel p-2 sm:p-2.5 rounded-2xl shadow-2xl safe-bottom">
+        {% csrf_token %}
+        <div class="relative flex-1">
+            <input type="text" id="user-input"
+                placeholder="Ask about an expression, tonal shift, or linguistic nuance..."
+                class="w-full bg-surface/80 border border-white/10 rounded-xl px-4 py-3 sm:py-3.5 text-sm sm:text-base focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-gray-100 placeholder-gray-500 transition-all shadow-inner"
+                autocomplete="off" required>
+        </div>
+        <button type="submit"
+            class="flex-shrink-0 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 active:scale-95 transition-all text-white px-6 py-3 sm:py-3.5 rounded-xl font-semibold text-sm sm:text-base shadow-lg shadow-brand-600/30 cursor-pointer flex items-center justify-center group">
+            <span>Ask</span>
+            <svg class="w-4 h-4 ml-1.5 transform group-hover:translate-x-0.5 transition-transform" fill="none"
+                stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+        </button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const chatForm = document.getElementById('chat-form');
+    const userInput = document.getElementById('user-input');
+    const chatContainer = document.getElementById('chat-container');
+
+    chatForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const question = userInput.value.trim();
+        if (!question) return;
+
+        // Append User Message (Modern Bubble Layout)
+        chatContainer.innerHTML += `
+            <div class="flex items-start justify-end space-x-3">
+                <div class="max-w-[88%] sm:max-w-[82%]">
+                    <div class="bg-gradient-to-br from-brand-700 to-indigo-700 text-white rounded-2xl rounded-tr-sm p-4 sm:p-5 text-sm sm:text-base leading-relaxed shadow-lg break-words space-y-1">
+                        <div class="text-[10px] uppercase font-bold tracking-widest text-brand-200/80 mb-0.5">You</div>
+                        ${escapeHtml(question)}
+                    </div>
+                </div>
+            </div>`;
+
+        userInput.value = '';
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+
+        // Loading state indicator
+        const loadingId = 'loading-' + Date.now();
+        chatContainer.innerHTML += `
+            <div id="${loadingId}" class="flex items-start space-x-3 animate-pulse-subtle">
+                <div class="flex-shrink-0 h-9 w-9 rounded-xl bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center font-bold text-sm text-white shadow-md">AI</div>
+                <div class="bg-surface border border-white/5 rounded-2xl rounded-tl-sm p-4 sm:p-5 text-gray-400 text-sm sm:text-base flex items-center gap-3">
+                    <div class="flex space-x-1.5">
+                        <div class="w-2 h-2 bg-brand-400 rounded-full animate-bounce" style="animation-delay: 0s"></div>
+                        <div class="w-2 h-2 bg-brand-400 rounded-full animate-bounce" style="animation-delay: 0.15s"></div>
+                        <div class="w-2 h-2 bg-brand-400 rounded-full animate-bounce" style="animation-delay: 0.3s"></div>
+                    </div>
+                    <span class="text-xs uppercase tracking-wider font-semibold text-gray-400">Analyzing Subtext & Context...</span>
+                </div>
+            </div>`;
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+
+        try {
+            const response = await fetch("{% url 'ai_chat_api' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ question: question })
+            });
+
+            const data = await response.json();
+            const loadingElement = document.getElementById(loadingId);
+            if (loadingElement) loadingElement.remove();
+
+            let sourcesHtml = '';
+            if (data.sources_used && data.sources_used.length > 0) {
+                sourcesHtml = `
+                    <div class="mt-4 pt-3 border-t border-white/5 flex items-center gap-2 flex-wrap">
+                        <span class="text-[11px] font-semibold tracking-wider uppercase text-gray-400">Sources:</span>
+                        ${data.sources_used.map(src => `<span class="px-2 py-0.5 rounded-md text-[11px] bg-white/5 text-gray-300 border border-white/5">${escapeHtml(src)}</span>`).join('')}
+                    </div>`;
+            }
+
+            chatContainer.innerHTML += `
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 h-9 w-9 rounded-xl bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center font-bold text-sm text-white shadow-md">AI</div>
+                    <div class="flex-1 max-w-[88%] sm:max-w-[82%]">
+                        <div class="bg-surface border border-white/5 rounded-2xl rounded-tl-sm p-4 sm:p-6 text-gray-200 text-sm sm:text-base leading-relaxed space-y-3 shadow-xl break-words overflow-hidden">
+                            <div class="markdown-body space-y-2">${formatMarkdown(data.reply || data.error)}</div>
+                            ${sourcesHtml}
+                        </div>
+                    </div>
+                </div>`;
+        } catch (err) {
+            const loadingElement = document.getElementById(loadingId);
+            if (loadingElement) loadingElement.remove();
+
+            chatContainer.innerHTML += `
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 h-9 w-9 rounded-xl bg-red-600/80 flex items-center justify-center font-bold text-sm text-white shadow-md">!</div>
+                    <div class="bg-red-950/40 border border-red-500/20 text-red-300 rounded-2xl rounded-tl-sm p-4 sm:p-5 max-w-[88%] text-sm sm:text-base shadow-xl">
+                        An error occurred while communicating with the intelligence backend. Please verify your connection.
+                    </div>
+                </div>`;
+        }
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    });
+
+    function escapeHtml(text) {
+        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function formatMarkdown(text) {
+        return text
+            .replace(/### (.*?)\n/g, '<h3 class="font-bold text-base sm:text-lg text-brand-300 mt-4 mb-2 flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-brand-400"></span>$1</h3>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>')
+            .replace(/\* (.*?)(?=<br>|$)/g, '<li class="ml-4 list-disc text-gray-300">$1</li>')
+            .replace(/\n/g, '<br>');
+    }
+</script>
+{% endblock %}

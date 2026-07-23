@@ -1,0 +1,23 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div
+    style="max-width: 600px; margin: 20px 0; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <h2 style="margin-top: 0;">Importer une transcription SRT</h2>
+    <p>Vidéo : <strong>{{ video.title }}</strong></p>
+    <hr style="margin: 15px 0;">
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <br>
+        <button type="submit" class="default" style="padding: 10px 20px; cursor: pointer;">
+            Charger les sous-titres
+        </button>
+        <a href="{% url 'admin:simulator_videocontext_change' video.id %}"
+            style="margin-left: 15px; text-decoration: none; color: #666;">
+            Annuler
+        </a>
+    </form>
+</div>
+{% endblock %}

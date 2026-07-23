@@ -1,0 +1,209 @@
+{% extends 'simulator/base.html' %}
+
+{% block title %}My Saved Deck | Native Immersion{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+
+    <!-- HEADER -->
+    <header class="mb-8 flex items-center justify-between flex-wrap gap-4">
+        <div>
+            <a href="{% url 'video_index' %}"
+                class="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-indigo-400 transition mb-2">
+                ← Back to Dashboard
+            </a>
+            <h1 class="text-3xl font-black text-white">My Personal Subtext Deck</h1>
+            <p class="text-slate-400 text-sm">Review, search, and master idioms bookmarked from your immersion sessions.
+            </p>
+        </div>
+
+        {% if saved_items %}
+        <a href="{% url 'practice_quiz' %}"
+            class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg shadow-indigo-600/30 flex items-center gap-2">
+            <span>🧠</span> Start Flashcard Practice
+        </a>
+        {% endif %}
+    </header>
+
+    <!-- SEARCH & FILTER BAR -->
+    <div
+        class="mb-8 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+        <form method="GET" action="{% url 'my_deck' %}" class="w-full md:w-auto flex-1 flex items-center gap-3">
+            <input type="text" name="q" value="{{ query }}" placeholder="Search idioms, subtext, or tags..."
+                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
+            <button type="submit"
+                class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition cursor-pointer">
+                Search
+            </button>
+        </form>
+
+        <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto">
+            <a href="{% url 'my_deck' %}"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold transition {% if not selected_status %}bg-indigo-600 text-white{% else %}bg-slate-800 text-slate-400 hover:text-white{% endif %}">
+                All
+            </a>
+            <a href="?status=learning{% if query %}&q={{ query }}{% endif %}"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold transition {% if selected_status == 'learning' %}bg-amber-600 text-white{% else %}bg-slate-800 text-slate-400 hover:text-white{% endif %}">
+                Learning
+            </a>
+            <a href="?status=mastered{% if query %}&q={{ query }}{% endif %}"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold transition {% if selected_status == 'mastered' %}bg-emerald-600 text-white{% else %}bg-slate-800 text-slate-400 hover:text-white{% endif %}">
+                Mastered
+            </a>
+        </div>
+    </div>
+
+    <!-- SAVED CARDS GRID -->
+    {% if saved_items %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for item in saved_items %}
+        <div id="card-{{ item.expression.id }}"
+            class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between hover:border-slate-700 transition">
+
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <!-- Status Badge -->
+                    <span id="badge-{{ item.expression.id }}"
+                        class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border 
+                            {% if item.status == 'mastered' %}bg-emerald-950 text-emerald-400 border-emerald-900/50{% else %}bg-amber-950 text-amber-400 border-amber-900/50{% endif %}">
+                        {{ item.status }}
+                    </span>
+
+                    <button onclick="removeBookmark({{ item.expression.id }})"
+                        class="text-xs text-slate-500 hover:text-rose-400 transition cursor-pointer">
+                        ✕ Delete
+                    </button>
+                </div>
+
+                <h3 class="text-xl font-black text-white italic mb-3">"{{ item.expression.phrase }}"</h3>
+
+                <div class="p-3 bg-indigo-950/40 border border-indigo-900/60 rounded-xl mb-3">
+                    <span class="text-[10px] text-indigo-400 block uppercase tracking-wider font-bold mb-1">
+                        Native Subtext:
+                    </span>
+                    <p class="text-slate-200 text-sm font-medium">{{ item.expression.native_subtext }}</p>
+                </div>
+
+                <div class="mb-3">
+                    <span class="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">
+                        Literal Meaning:
+                    </span>
+                    <p class="text-slate-400 text-xs">{{ item.expression.literal_meaning }}</p>
+                </div>
+
+                {% if item.tags %}
+                <div class="flex flex-wrap gap-1 mb-3">
+                    {% for tag in item.tags.split %}
+                    <span class="text-[10px] text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+                        #{{ tag }}
+                    </span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div>
+                <!-- Mastery Toggle Button -->
+                <button id="btn-mastery-{{ item.expression.id }}" data-status="{{ item.status }}"
+                    onclick="toggleMastery({{ item.expression.id }})"
+                    class="mt-4 w-full bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-bold py-2 px-3 rounded-xl border border-slate-700 transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <span>✓</span>
+                    <span id="btn-text-{{ item.expression.id }}">
+                        {% if item.status == 'mastered' %}Mark as Learning{% else %}Mark as Mastered{% endif %}
+                    </span>
+                </button>
+
+                <div
+                    class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
+                    <span class="truncate max-w-[170px]" title="{{ item.expression.video_context.title }}">
+                        From: {{ item.expression.video_context.title }}
+                    </span>
+                    <a href="{% url 'video_player' item.expression.video_context.id %}?t={{ item.expression.timestamp_seconds }}"
+                        class="text-indigo-400 hover:underline flex items-center gap-1">
+                        Watch →
+                    </a>
+                </div>
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center max-w-lg mx-auto mt-10">
+        <span class="text-4xl block mb-3">🔖</span>
+        <h3 class="text-xl font-bold text-white mb-2">No matching cards found</h3>
+        <p class="text-slate-400 text-sm mb-6">Try clearing your search query or save new cards from video sessions.</p>
+        <a href="{% url 'video_index' %}"
+            class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-5 rounded-xl transition text-sm inline-block">
+            Browse Videos
+        </a>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function removeBookmark(expressionId) {
+        fetch(`/bookmark/${expressionId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.is_saved) {
+                    var card = document.getElementById(`card-${expressionId}`);
+                    if (card) {
+                        card.style.opacity = '0';
+                        card.style.transform = 'scale(0.95)';
+                        card.style.transition = 'all 0.2s ease';
+                        setTimeout(() => card.remove(), 200);
+                    }
+                }
+            })
+            .catch(err => console.error(err));
+    }
+
+    function toggleMastery(expressionId) {
+        var btn = document.getElementById(`btn-mastery-${expressionId}`);
+        var currentStatus = btn.getAttribute('data-status');
+        var newStatus = currentStatus === 'mastered' ? 'learning' : 'mastered';
+
+        var formData = new FormData();
+        formData.append('status', newStatus);
+
+        fetch(`/update-mastery/${expressionId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+            body: formData
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Update state attributes
+                    btn.setAttribute('data-status', data.new_status);
+
+                    var badge = document.getElementById(`badge-${expressionId}`);
+                    var btnText = document.getElementById(`btn-text-${expressionId}`);
+
+                    if (data.new_status === 'mastered') {
+                        badge.innerText = 'mastered';
+                        badge.className = 'text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border bg-emerald-950 text-emerald-400 border-emerald-900/50';
+                        btnText.innerText = 'Mark as Learning';
+                    } else {
+                        badge.innerText = 'learning';
+                        badge.className = 'text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border bg-amber-950 text-amber-400 border-amber-900/50';
+                        btnText.innerText = 'Mark as Mastered';
+                    }
+                }
+            })
+            .catch(err => console.error(err));
+    }
+</script>
+{% endblock %}

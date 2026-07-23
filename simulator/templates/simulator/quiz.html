@@ -1,0 +1,237 @@
+{% extends 'simulator/base.html' %}
+
+{% block title %}Subtext Flashcard Review | Native Immersion{% endblock %}
+
+{% block extra_head %}
+<style>
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in {
+        animation: fadeIn 0.25s ease-out forwards;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto min-h-[80vh] flex flex-col justify-between">
+    <div>
+        <!-- HEADER -->
+        <header class="mb-8 flex items-center justify-between">
+            <a href="{% url 'my_deck' %}"
+                class="text-xs font-semibold text-slate-400 hover:text-indigo-400 transition flex items-center gap-1">
+                ← Exit Practice Mode
+            </a>
+            <span id="progress-indicator"
+                class="text-xs font-mono font-bold text-indigo-400 bg-indigo-950/80 px-3 py-1 rounded-full border border-indigo-900/60">
+                Card 1 of {{ saved_items|length }}
+            </span>
+        </header>
+
+        <!-- DATA CONTAINER -->
+        <div id="quiz-data" class="hidden">
+            [
+            {% for item in saved_items %}
+            {
+            "id": {{ item.expression.id }},
+            "phrase": "{{ item.expression.phrase|escapejs }}",
+            "subtext": "{{ item.expression.native_subtext|escapejs }}",
+            "literal": "{{ item.expression.literal_meaning|escapejs }}",
+            "context": "{{ item.expression.social_context|escapejs }}",
+            "status": "{{ item.status }}",
+            "video_id": {{ item.expression.video_context.id|default:0 }},
+            "timestamp": {{ item.expression.timestamp_seconds|default:0 }}
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+            ]
+        </div>
+
+        {% if saved_items %}
+        <!-- FLASHCARD CONTAINER -->
+        <div id="flashcard-box"
+            class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl min-h-[360px] flex flex-col justify-between text-center transition-all">
+
+            <div>
+                <span class="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest block mb-2">
+                    Surface Phrasing
+                </span>
+                <h2 id="card-phrase" class="text-2xl sm:text-3xl font-black text-white italic mb-4 leading-snug">""</h2>
+
+                <!-- REVEALED CONTENT -->
+                <div id="card-answer"
+                    class="hidden space-y-4 text-left animate-fade-in mt-6 pt-6 border-t border-slate-800">
+
+                    <div class="p-4 bg-indigo-950/50 border border-indigo-900/60 rounded-2xl">
+                        <span class="text-xs text-indigo-400 block uppercase tracking-wider font-bold mb-1">
+                            🎭 Native Subtext (What they REALLY mean):
+                        </span>
+
+                        <p id="card-subtext" class="text-slate-100 font-medium text-sm sm:text-base leading-relaxed">
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                            <span
+                                class="text-slate-400 block uppercase tracking-wider font-semibold text-[10px]">Literal
+                                Meaning:</span>
+                            <p id="card-literal" class="text-slate-300 mt-0.5"></p>
+                        </div>
+                        <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                            <span class="text-slate-400 block uppercase tracking-wider font-semibold text-[10px]">Social
+                                Trigger:</span>
+                            <p id="card-context" class="text-slate-300 italic mt-0.5"></p>
+                        </div>
+                    </div>
+
+                    <div class="text-right pt-1">
+                        <a id="card-video-link" href="#" target="_blank"
+                            class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition inline-flex items-center gap-1">
+                            Watch scene in player →
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <button id="reveal-btn" onclick="revealAnswer()"
+                class="mt-8 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 px-4 rounded-xl transition shadow-lg shadow-indigo-600/20 cursor-pointer">
+                Reveal Native Meaning 🧠
+            </button>
+        </div>
+
+        <!-- CONTROLS & MASTERY RATING -->
+        <div id="next-controls" class="hidden mt-6 grid grid-cols-2 gap-3 sm:gap-4">
+            <button onclick="handleResponse('learning')"
+                class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3.5 px-4 rounded-xl border border-slate-700 transition cursor-pointer text-xs sm:text-sm flex items-center justify-center gap-2">
+                <span>🔄</span> Still Learning
+            </button>
+            <button onclick="handleResponse('mastered')"
+                class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-4 rounded-xl transition shadow-lg shadow-emerald-600/20 cursor-pointer text-xs sm:text-sm flex items-center justify-center gap-2">
+                <span>✅</span> Got It! Mastered
+            </button>
+        </div>
+
+        {% else %}
+        <!-- EMPTY STATE -->
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-10 text-center space-y-4 my-8">
+            <span class="text-4xl block">📚</span>
+            <h3 class="text-xl font-bold text-white">Your quiz queue is empty</h3>
+            <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+                Save expressions while watching videos in the simulator to populate your practice queue.
+            </p>
+            <a href="{% url 'video_index' %}"
+                class="inline-block bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 px-6 rounded-xl transition mt-2">
+                Browse Videos
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    var deck = [];
+    try {
+        deck = JSON.parse(document.getElementById('quiz-data').innerText);
+    } catch (e) {
+        console.error("Error parsing deck data:", e);
+    }
+
+    var currentIndex = 0;
+
+    function loadCard() {
+        if (deck.length === 0) return;
+
+        if (currentIndex >= deck.length) {
+            document.getElementById('flashcard-box').innerHTML = `
+                    <div class="py-12 text-center space-y-3">
+                        <span class="text-5xl block">🎉</span>
+                        <h2 class="text-2xl font-black text-white">Deck Completed!</h2>
+                        <p class="text-slate-400 text-xs sm:text-sm max-w-sm mx-auto">
+                            Awesome job! You've gone through all saved items in your queue.
+                        </p>
+                        <a href="{% url 'my_deck' %}" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-xl transition inline-block text-xs sm:text-sm mt-2">
+                            Return to My Deck
+                        </a>
+                    </div>
+                `;
+            var nextControls = document.getElementById('next-controls');
+            if (nextControls) nextControls.classList.add('hidden');
+            document.getElementById('progress-indicator').innerText = "Complete";
+            return;
+        }
+
+        var item = deck[currentIndex];
+        document.getElementById('card-phrase').innerText = `"${item.phrase}"`;
+        document.getElementById('card-subtext').innerText = item.subtext;
+        document.getElementById('card-literal').innerText = item.literal || "N/A";
+        document.getElementById('card-context').innerText = item.context || "General conversation";
+
+        // Deep-link to player timestamp
+        if (item.video_id > 0) {
+            document.getElementById('card-video-link').href = `/video/${item.video_id}/?t=${item.timestamp}`;
+            document.getElementById('card-video-link').classList.remove('hidden');
+        } else {
+            document.getElementById('card-video-link').classList.add('hidden');
+        }
+
+        // Reset visibility
+        document.getElementById('card-answer').classList.add('hidden');
+        document.getElementById('reveal-btn').classList.remove('hidden');
+        document.getElementById('next-controls').classList.add('hidden');
+
+        document.getElementById('progress-indicator').innerText = `Card ${currentIndex + 1} of ${deck.length}`;
+    }
+
+    function revealAnswer() {
+        document.getElementById('card-answer').classList.remove('hidden');
+        document.getElementById('reveal-btn').classList.add('hidden');
+        document.getElementById('next-controls').classList.remove('hidden');
+        document.getElementById('next-controls').classList.add('grid');
+    }
+
+    function handleResponse(newStatus) {
+        if (currentIndex >= deck.length) return;
+
+        var currentCard = deck[currentIndex];
+
+        // Send AJAX update to Django endpoint
+        var formData = new FormData();
+        formData.append('status', newStatus);
+
+        fetch(`/update-mastery/${currentCard.id}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: formData
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    currentCard.status = data.new_status;
+                }
+            })
+            .catch(err => console.error("Error updating mastery:", err));
+
+        // Advance to next card immediately
+        currentIndex++;
+        loadCard();
+    }
+
+    // Initialize first card on page load
+    if (deck.length > 0) {
+        loadCard();
+    }
+</script>
+{% endblock %}
