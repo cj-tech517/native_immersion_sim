@@ -24,7 +24,13 @@ from .models import (
     StudentAssessmentAttempt,
 )
 
-# Initialize the Gemini client using your API key
+import os
+from google import genai
+
+# Define the variable from the environment first
+AI_API_KEY = os.getenv("AI_API_KEY")
+
+# Then initialize the client using it
 client = genai.Client(api_key=AI_API_KEY)
 
 
