@@ -1,0 +1,47 @@
+When you eventually set up your **new database** after the old one expires, here is the exact order of what you need to do:
+
+1. **Connect your app** to the new database URL in Render (and update your local `.env` if testing locally).
+2. **Run your migrations** (`python manage.py migrate`) so the new database creates all the correct tables and structure. *Without this, the database won't know how to receive your data.*
+3. **Restore your data** using your backup file:
+```bash
+python -X utf8 manage.py loaddata student_records_backup.json
+
+```
+
+
+
+So, you **do** need to run migrations on the new database first, *then* load your JSON backup file into it!
+
+
+Next time you want to extract your entire database, run this exact command in your terminal (with your virtual environment active):
+
+```bash
+python -X utf8 manage.py dumpdata --natural-foreign --natural-primary -e contenttypes -e auth.Permission --indent 4 --output student_records_backup.json
+
+```
+
+
+Le problème vient du fait que la console Windows (`cmd` ou PowerShell) utilise un encodage par défaut (`charmap` / `cp1252`) qui ne sait pas afficher ou écrire les émojis (comme le 💀 dans tes données) lorsque Django essaie de sérialiser la base de données. Même avec l'option `--output`, Django passe par la sortie standard ou l'encodage système sous Windows pour certaines opérations de sérialisation.
+
+Pour contourner définitivement ce problème d'encodage Windows et forcer Python à écrire le fichier en **UTF-8 pur**, exécute cette commande rapide dans ton PowerShell (ton `venv` étant activé) :
+
+```powershell
+python -X utf8 manage.py dumpdata --natural-foreign --natural-primary -e contenttypes -e auth.Permission --indent 4 --output student_records_backup.json
+python -X utf8 manage.py dumpdata --natural-foreign --natural-primary -e contenttypes -e auth.Permission --indent 4 --output database_backup.json
+
+```
+
+L'argument `-X utf8` force l'interpréteur Python à utiliser l'encodage UTF-8 pour toutes les opérations d'E/S de fichiers, ce qui permettra d'enregistrer tes émojis et caractères spéciaux dans `student_records_backup.json` sans aucune erreur !
+
+
+
+
+premieremet il faut activer ca :''.\venv\Scripts\Activate.ps1  ''                      
+                 :
+
+
+
+
+TRUEST ;
+python -X utf8 manage.py dumpdata --natural-foreign --natural-primary -e contenttypes -e auth.Permission --indent 4 --output database_backup.json
+;
